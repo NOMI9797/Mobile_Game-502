@@ -15,6 +15,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppButton from '../components/AppButton';
@@ -139,8 +140,32 @@ export default function GameScreen({ setups, onExit }: Props) {
       ),
     [isHumanTurn, me.hand, state],
   );
+
+  // ----- responsive layout from the screen width -----
+  const { width: screenWidth } = useWindowDimensions();
+  const usable = screenWidth - spacing.lg * 2;
+
+  // Hand: squeeze the cards together so they fit the screen. Each card keeps
+  // at least MIN_VISIBLE px showing; beyond that the hand scrolls sideways.
+  const CARD_W = 62;
+  const MIN_VISIBLE = 24;
   const overlap =
-    hand.length > 6 ? -Math.min(30, (hand.length - 6) * 4 + 14) : 6;
+    hand.length <= 1
+      ? 0
+      : Math.min(
+          6,
+          Math.max(
+            MIN_VISIBLE - CARD_W,
+            (usable - CARD_W) / (hand.length - 1) - CARD_W,
+          ),
+        );
+
+  // Bot seats share the row equally (between 64 and 96 px wide).
+  const botCount = state.players.length - 1;
+  const seatWidth = Math.max(
+    64,
+    Math.min(96, (usable - spacing.sm * botCount) / botCount),
+  );
 
   const onCardPress = (card: Card) => {
     // Jack (not your last card): ask which suit to name first.
@@ -179,17 +204,20 @@ export default function GameScreen({ setups, onExit }: Props) {
         <View style={styles.topButtons}>
           <AppButton
             title="Scores"
+            size="small"
             variant="secondary"
             onPress={() => setShowScores(true)}
           />
           <AppButton
             title="Restart"
+            size="small"
             variant="secondary"
             onPress={confirmRestart}
             style={styles.topButton}
           />
           <AppButton
-            title="✕"
+            title="Quit"
+            size="small"
             variant="secondary"
             onPress={confirmQuit}
             style={styles.topButton}
@@ -209,6 +237,7 @@ export default function GameScreen({ setups, onExit }: Props) {
             <OpponentSeat
               key={i}
               player={p}
+              width={seatWidth}
               isTurn={state.phase === 'playing' && state.currentPlayer === i}
             />
           ),
@@ -390,7 +419,11 @@ const styles = StyleSheet.create({
   topButtons: { flexDirection: 'row' },
   topButton: { marginLeft: spacing.sm },
   opponents: { flexGrow: 0, marginTop: spacing.md },
-  opponentsContent: { paddingHorizontal: spacing.lg },
+  opponentsContent: {
+    paddingHorizontal: spacing.lg,
+    flexGrow: 1,
+    justifyContent: 'center',
+  },
   table: {
     flex: 1,
     margin: spacing.lg,

@@ -12,9 +12,11 @@ import PlayingCard from './PlayingCard';
 interface Props {
   player: Player;
   isTurn: boolean;
+  /** Seat width, worked out by the game screen so all seats fit on screen. */
+  width: number;
 }
 
-export default function OpponentSeat({ player, isTurn }: Props) {
+export default function OpponentSeat({ player, isTurn, width }: Props) {
   const pulse = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -50,6 +52,7 @@ export default function OpponentSeat({ player, isTurn }: Props) {
     <Animated.View
       style={[
         styles.seat,
+        { width },
         isTurn && { borderColor, borderWidth: 2 },
         player.eliminated && styles.out,
       ]}
@@ -75,7 +78,6 @@ export default function OpponentSeat({ player, isTurn }: Props) {
 
 const styles = StyleSheet.create({
   seat: {
-    width: 86,
     alignItems: 'center',
     padding: spacing.sm,
     marginRight: spacing.sm,

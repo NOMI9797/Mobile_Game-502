@@ -64,8 +64,13 @@ export default function PlayingCard({
   const body = showBack ? (
     <View style={[styles.card, styles.back, { width: dims.w, height: dims.h }]}>
       <View style={styles.backInner}>
-        <Text style={[styles.backLogo, { fontSize: dims.rank }]}>502</Text>
+        {size === 'sm' ? (
+          <View style={styles.backDot} />
+        ) : (
+          <Text style={[styles.backLogo, { fontSize: dims.rank }]}>502</Text>
+        )}
       </View>
+      {dimmed && <View style={styles.dimOverlay} />}
     </View>
   ) : (
     <View
@@ -93,16 +98,12 @@ export default function PlayingCard({
           {card!.rank}
         </Text>
       )}
+      {dimmed && <View style={styles.dimOverlay} />}
     </View>
   );
 
   return (
-    <Animated.View
-      style={[
-        { transform: [{ translateY: lift }], opacity: dimmed ? 0.45 : 1 },
-        style,
-      ]}
-    >
+    <Animated.View style={[{ transform: [{ translateY: lift }] }, style]}>
       {onPress ? (
         <Pressable
           onPress={onPress}
@@ -137,6 +138,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   playable: { borderColor: colors.accent, borderWidth: 3 },
+  // A solid dark layer on top (not opacity), so overlapping cards never show through.
+  dimOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderRadius: radius.sm - 2,
+    backgroundColor: 'rgba(11, 15, 23, 0.55)',
+  },
+  backDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.accent,
+  },
   rank: { fontWeight: '900' },
   rankBottom: { alignSelf: 'flex-end', transform: [{ rotate: '180deg' }] },
   pip: { textAlign: 'center', marginTop: -4 },

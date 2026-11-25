@@ -1,97 +1,151 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# 502 – Card Game (React Native)
 
-# Getting Started
+A mobile version of the **502** shedding card game from
+[502-game.vercel.app](https://502-game.vercel.app/), built with **React Native CLI**
+and **TypeScript**. You play against 1–5 computer opponents. The rules follow the
+original game. The interface, colours and animations are our own design.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+> Animations use **[lottie-react-native](https://github.com/lottie-react-native/lottie-react-native)**
+> (Lottie / LottieFiles format), plus React Native's built-in `Animated` API.
 
-## Step 1: Start Metro
+---
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## How to play
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+**Goal:** get rid of your cards. Cards left in your hand when a round ends count
+as penalty points. Reach **502 or more** and you are eliminated. The **last
+player still in the game wins.**
 
-```sh
-# Using npm
-npm start
+1. Everyone gets **7 cards**. One card is turned up to start the discard pile.
+2. On your turn, do **one** of these:
+   - **play a card** that matches the top card's **suit** or **value**, or
+   - **draw one card**. A drawn card cannot be played on the same turn.
+3. **Special cards**
 
-# OR using Yarn
-yarn start
-```
+| Card | Effect |
+|---|---|
+| **Jack** (any) | Wild. Name a suit, and the next player must follow it (or play a Jack or the 7♥). |
+| **7♥** | Wild. Ends the round immediately. Whoever plays it wins the round. |
+| **2** | The next player draws 2, or stacks another 2 (the penalty becomes 4, 6, 8 …). |
+| **A♠** | The next player draws 5, or passes it on with any other Ace. It stays at 5. |
+| **8** | The next player is skipped, or passes the skip on with their own 8. |
 
-## Step 2: Build and run your app
+   While a penalty is waiting, you may only answer with the matching card type
+   (a 2, an Ace, or an 8), or accept the penalty. A Jack or the 7♥ cannot cancel it.
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+4. **The round ends** when someone plays their last card or plays the 7♥. If the
+   last card is a 2 or the A♠, the next player still draws the penalty first.
+5. **Scoring** (per card left in hand):
 
-### Android
+| Cards | Points |
+|---|---|
+| 7♥, A♠ | 100 |
+| 2, 8, Jack | 30 |
+| A♥, A♦, A♣ | 20 |
+| 10, Q, K | 10 |
+| 3, 4, 5, 6, 7, 9 | 5 |
 
-```sh
-# Using npm
-npm run android
+6. **Elimination:** totals carry over between rounds. After each round, anyone at
+   **502+** is out, except the round winner, who is safe that round. If **everyone**
+   left crosses 502 in the same round, the **lowest total wins**.
+7. The player with the **fewest points last round** starts the next round.
 
-# OR using Yarn
-yarn android
-```
+---
 
-### iOS
+## Running the app
 
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
+**Requirements:** Node ≥ 22, JDK 17, Android Studio (SDK and an emulator) and/or
+Xcode with CocoaPods. See the
+[React Native environment setup](https://reactnative.dev/docs/set-up-your-environment).
 
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
+```bash
+npm install                     # JavaScript dependencies
 
-```sh
+# iOS only (first time, and after adding native packages)
 bundle install
-```
+cd ios && bundle exec pod install && cd ..
 
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+npm start                       # Metro bundler (keep it running)
+npm run android                 # in a second terminal, or:
 npm run ios
-
-# OR using Yarn
-yarn ios
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+```bash
+npm test                        # 39 tests for the rules and the AI
+npm run lint
+```
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+---
 
-## Step 3: Modify your app
+## Project structure
 
-Now that you have successfully run the app, let's make changes!
+```
+App.tsx                      Root: switches between Home → Setup → Game screens
+index.js                     Registers the App component with React Native
+src/
+  engine/                    Game logic: pure TypeScript, no React
+    types.ts                 Data shapes: Card, Player, GameState, GameAction
+    deck.ts                  Create and shuffle the deck, card points, start-card check
+    rules.ts                 canPlayCard(): the matching rules
+    game.ts                  gameReducer(): play / draw / accept / next round / new game,
+                             plus scoring and elimination
+    ai.ts                    chooseAiAction(): the bots' strategy
+    index.ts                 Re-exports the engine
+  hooks/useGame.ts           useReducer + automatic bot turns (with a delay)
+  screens/
+    HomeScreen.tsx           Lottie logo, title, Play button
+    SetupScreen.tsx          Your name and number of bots
+    GameScreen.tsx           The game table
+  components/
+    PlayingCard.tsx          One card (face or back, playable / dimmed)
+    OpponentSeat.tsx         A bot's seat (pulses on their turn)
+    AppButton.tsx            Animated button
+    SuitPicker.tsx           "Name a suit" pop-up for Jacks
+    ScoreTable.tsx           Scores with progress bars to 502
+    RoundSummaryModal.tsx    End-of-round results (Lottie on elimination)
+    GameOverModal.tsx        Winner screen (Lottie confetti) + Play again
+    ErrorBoundary.tsx        Catches unexpected errors instead of crashing
+  theme.ts                   Colours, spacing, font sizes, bot names
+  assets/lottie/*.json       Lottie animations
+scripts/generate-lottie.js   Script that builds the Lottie JSON files
+__tests__/                   Jest tests (engine, AI, app render)
+__mocks__/                   Jest stand-in for the native Lottie view
+android/, ios/               Native projects (generated by React Native)
+```
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+### How it works
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+- **One-way data flow.** All game data lives in one `GameState` object. The UI
+  never changes it directly. It sends an **action** (for example `PLAY_CARD`) to
+  `gameReducer`, which checks the move and returns a **new** state. React then
+  re-renders.
+- **Invalid moves are safe.** If a move breaks a rule (wrong card, not your turn,
+  a Jack without a suit, drawing during a penalty), the reducer returns the
+  unchanged state with an `error` message. The screen shows it as a red toast.
+- **Bots use the same rules.** `chooseAiAction` only returns an action. The
+  reducer validates it exactly like a human tap, so bots cannot cheat.
+- **Bot turns.** `useGame` watches the state. When it is a bot's turn it waits
+  about 0.9 s, then dispatches the bot's action. The timer is cancelled if the
+  state changes or the screen closes.
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+---
 
-## Congratulations! :tada:
+## Rule decisions
 
-You've successfully run and modified your React Native App. :partying_face:
+The reference site leaves a few details open, so we chose:
 
-### Now what?
+- Accepting a penalty (draw 2/4/…, draw 5, or being skipped) uses up your turn.
+- In round 1 the human player starts (the site's "first player to join").
+- The online-only rule "skip a player who is away for 30 s" is not used, since
+  this is a single-device game.
+- No voice or chat features (per the project brief).
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+---
 
-# Troubleshooting
+## Screenshots
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+_Add the screenshots to `docs/screenshots/` and they appear here._
 
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+| Home | Setup | Game | Round summary | Winner |
+|---|---|---|---|---|
+| ![](docs/screenshots/home.png) | ![](docs/screenshots/setup.png) | ![](docs/screenshots/game.png) | ![](docs/screenshots/round.png) | ![](docs/screenshots/winner.png) |

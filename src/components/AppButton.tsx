@@ -21,6 +21,8 @@ interface Props {
   onPress: () => void;
   variant?: Variant;
   disabled?: boolean;
+  /** "small" = compact pill for toolbars */
+  size?: 'normal' | 'small';
   style?: StyleProp<ViewStyle>;
 }
 
@@ -29,6 +31,7 @@ export default function AppButton({
   onPress,
   variant = 'primary',
   disabled = false,
+  size = 'normal',
   style,
 }: Props) {
   const scale = useRef(new Animated.Value(1)).current;
@@ -48,10 +51,19 @@ export default function AppButton({
         onPress={onPress}
         onPressIn={() => springTo(0.95)}
         onPressOut={() => springTo(1)}
-        style={[styles.base, styles[variant], disabled && styles.disabled]}
+        style={[
+          styles.base,
+          size === 'small' && styles.small,
+          styles[variant],
+          disabled && styles.disabled,
+        ]}
       >
         <Text
-          style={[styles.text, variant === 'secondary' && styles.textLight]}
+          style={[
+            styles.text,
+            size === 'small' && styles.textSmall,
+            variant === 'secondary' && styles.textLight,
+          ]}
         >
           {title}
         </Text>
@@ -76,6 +88,7 @@ const styles = StyleSheet.create({
   },
   danger: { backgroundColor: colors.danger },
   warning: { backgroundColor: colors.warning },
+  small: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   disabled: { opacity: 0.4 },
   text: {
     color: colors.background,
@@ -83,5 +96,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 0.5,
   },
+  textSmall: { fontSize: font.small + 1 },
   textLight: { color: colors.text },
 });
