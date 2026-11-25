@@ -1,45 +1,68 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
+ * App.tsx
+ * Root component. Holds which screen is showing (home → setup → game) and the
+ * chosen players. A simple state switch is enough for three screens, so no
+ * navigation library is needed.
  *
  * @format
  */
+import React, { useState } from 'react';
+import { StatusBar, StyleSheet, View } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import ErrorBoundary from './src/components/ErrorBoundary';
+import { PlayerSetup } from './src/engine';
+import GameScreen from './src/screens/GameScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import SetupScreen from './src/screens/SetupScreen';
+import { colors } from './src/theme';
 
-import { NewAppScreen } from '@react-native/new-app-screen';
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native';
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context';
+type Screen = 'home' | 'setup' | 'game';
 
 function App() {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [screen, setScreen] = useState<Screen>('home');
+  const [setups, setSetups] = useState<PlayerSetup[]>([]);
+  // Changing the key remounts GameScreen → a completely fresh game.
+  const [gameKey, setGameKey] = useState(0);
+
+  const startGame = (players: PlayerSetup[]) => {
+    setSetups(players);
+    setGameKey(k => k + 1);
+    setScreen('game');
+  };
 
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <StatusBar barStyle="light-content" />
+      <View style={styles.root}>
+        <ErrorBoundary onReset={() => setScreen('home')}>
+          {screen === 'home' && (
+            <SafeAreaView style={styles.root}>
+              <HomeScreen onPlay={() => setScreen('setup')} />
+            </SafeAreaView>
+          )}
+          {screen === 'setup' && (
+            <SafeAreaView style={styles.root}>
+              <SetupScreen
+                onStart={startGame}
+                onBack={() => setScreen('home')}
+              />
+            </SafeAreaView>
+          )}
+          {screen === 'game' && (
+            <GameScreen
+              key={gameKey}
+              setups={setups}
+              onExit={() => setScreen('home')}
+            />
+          )}
+        </ErrorBoundary>
+      </View>
     </SafeAreaProvider>
   );
 }
 
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets();
-
-  return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
+  root: { flex: 1, backgroundColor: colors.background },
 });
 
 export default App;
