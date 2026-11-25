@@ -24,7 +24,10 @@ export function bestSuitFor(hand: Card[], ignoreId?: string): Suit {
   hand.forEach(card => {
     if (card.id !== ignoreId && card.rank !== 'J') counts[card.suit]++;
   });
-  return SUITS.reduce((best, suit) => (counts[suit] > counts[best] ? suit : best), SUITS[0]);
+  return SUITS.reduce(
+    (best, suit) => (counts[suit] > counts[best] ? suit : best),
+    SUITS[0],
+  );
 }
 
 /** Fewest cards held by any other player still in the game. */
@@ -37,7 +40,11 @@ function smallestOpponentHand(state: GameState, me: number): number {
 }
 
 /** Should the bot finish the round now with the 7♥? */
-function shouldPlaySevenOfHearts(state: GameState, me: number, onlyOption: boolean): boolean {
+function shouldPlaySevenOfHearts(
+  state: GameState,
+  me: number,
+  onlyOption: boolean,
+): boolean {
   const hand = state.players[me].hand;
   const leftover = handPoints(hand.filter(c => !isSevenOfHearts(c)));
   if (hand.length === 1) return true; // it's our last card anyway
@@ -67,13 +74,17 @@ export function chooseAiAction(state: GameState, me: number): GameAction {
   const seven = playable.find(isSevenOfHearts);
 
   // 3. 7♥ – end the round when it suits us.
-  if (seven && shouldPlaySevenOfHearts(state, me, normal.length + jacks.length === 0)) {
+  if (
+    seven &&
+    shouldPlaySevenOfHearts(state, me, normal.length + jacks.length === 0)
+  ) {
     return { type: 'PLAY_CARD', playerIndex: me, cardId: seven.id };
   }
 
   // 4. Most expensive normal card; tie-break on how many of that suit we hold.
   if (normal.length > 0) {
-    const sameSuitCount = (card: Card) => hand.filter(h => h.suit === card.suit).length;
+    const sameSuitCount = (card: Card) =>
+      hand.filter(h => h.suit === card.suit).length;
     const score = (card: Card) => cardPoints(card) * 100 + sameSuitCount(card);
     const best = normal.reduce((a, b) => (score(b) > score(a) ? b : a));
     return { type: 'PLAY_CARD', playerIndex: me, cardId: best.id };

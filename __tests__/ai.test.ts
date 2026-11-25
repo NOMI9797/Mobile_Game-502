@@ -19,7 +19,12 @@ const c = (id: string): Card => ({
 });
 const cards = (ids: string) => ids.split(' ').filter(Boolean).map(c);
 
-function makeState(hands: string[], top: string, pending: Pending = null, activeSuit?: Suit): GameState {
+function makeState(
+  hands: string[],
+  top: string,
+  pending: Pending = null,
+  activeSuit?: Suit,
+): GameState {
   return {
     phase: 'playing',
     players: hands.map((h, i) => ({
@@ -45,12 +50,22 @@ function makeState(hands: string[], top: string, pending: Pending = null, active
 }
 
 test('passes a 2 penalty on when it can', () => {
-  const s = makeState(['2S 5H 9H', 'KD KC KS'], '2H', { kind: 'twos', amount: 2 });
-  expect(chooseAiAction(s, 0)).toEqual({ type: 'PLAY_CARD', playerIndex: 0, cardId: '2S' });
+  const s = makeState(['2S 5H 9H', 'KD KC KS'], '2H', {
+    kind: 'twos',
+    amount: 2,
+  });
+  expect(chooseAiAction(s, 0)).toEqual({
+    type: 'PLAY_CARD',
+    playerIndex: 0,
+    cardId: '2S',
+  });
 });
 
 test('accepts the penalty when it cannot answer', () => {
-  const s = makeState(['5H 9H JD', 'KD KC KS'], '2H', { kind: 'twos', amount: 2 });
+  const s = makeState(['5H 9H JD', 'KD KC KS'], '2H', {
+    kind: 'twos',
+    amount: 2,
+  });
   expect(chooseAiAction(s, 0).type).toBe('ACCEPT_PENALTY');
 });
 
@@ -77,7 +92,12 @@ test('plays 7♥ when an opponent is about to go out', () => {
 test('all-bot games (2–6 players) always finish without an invalid move', () => {
   for (let g = 0; g < 100; g++) {
     const n = 2 + (g % 5);
-    let s = createGame(Array.from({ length: n }, (_, i) => ({ name: `Bot ${i}`, isHuman: false })));
+    let s = createGame(
+      Array.from({ length: n }, (_, i) => ({
+        name: `Bot ${i}`,
+        isHuman: false,
+      })),
+    );
     let steps = 0;
     while (s.phase !== 'gameOver' && steps < 50000) {
       steps++;

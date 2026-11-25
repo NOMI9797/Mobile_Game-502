@@ -30,16 +30,23 @@ export function canPlayCard(state: GameState, card: Card): boolean {
   return card.suit === state.activeSuit || card.rank === topCard(state).rank;
 }
 
-export function getPlayableCards(state: GameState, playerIndex: number): Card[] {
-  return state.players[playerIndex].hand.filter(card => canPlayCard(state, card));
+export function getPlayableCards(
+  state: GameState,
+  playerIndex: number,
+): Card[] {
+  return state.players[playerIndex].hand.filter(card =>
+    canPlayCard(state, card),
+  );
 }
 
 /** Short text describing the waiting penalty, for banners. */
 export function pendingText(state: GameState): string | null {
   const pending = state.pending;
   if (!pending) return null;
-  if (pending.kind === 'twos') return `Draw ${pending.amount} – or stack another 2`;
-  if (pending.kind === 'aceSpades') return `Draw ${pending.amount} – or pass it on with an Ace`;
+  if (pending.kind === 'twos')
+    return `Draw ${pending.amount} – or stack another 2`;
+  if (pending.kind === 'aceSpades')
+    return `Draw ${pending.amount} – or pass it on with an Ace`;
   return 'Skipped – or pass it on with an 8';
 }
 

@@ -88,7 +88,12 @@ export interface PlayerSetup {
 
 /** Everything that can happen in the game. The reducer handles each one. */
 export type GameAction =
-  | { type: 'PLAY_CARD'; playerIndex: number; cardId: string; chosenSuit?: Suit }
+  | {
+      type: 'PLAY_CARD';
+      playerIndex: number;
+      cardId: string;
+      chosenSuit?: Suit;
+    }
   | { type: 'DRAW_CARD'; playerIndex: number }
   | { type: 'ACCEPT_PENALTY'; playerIndex: number }
   | { type: 'NEXT_ROUND' }

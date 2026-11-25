@@ -65,7 +65,11 @@ function refillDrawPile(state: GameState): void {
 }
 
 /** Move up to `count` cards from the draw pile into a hand. Returns how many were drawn. */
-function drawInto(state: GameState, playerIndex: number, count: number): number {
+function drawInto(
+  state: GameState,
+  playerIndex: number,
+  count: number,
+): number {
   let drawn = 0;
   for (let i = 0; i < count; i++) {
     if (state.drawPile.length === 0) refillDrawPile(state);
@@ -82,8 +86,10 @@ function pendingSuffix(state: GameState): string {
   const next = state.players[state.currentPlayer].name;
   const pending = state.pending;
   if (!pending) return '';
-  if (pending.kind === 'twos') return ` ${next} must draw ${pending.amount} or stack a 2.`;
-  if (pending.kind === 'aceSpades') return ` ${next} must draw 5 or pass it with an Ace.`;
+  if (pending.kind === 'twos')
+    return ` ${next} must draw ${pending.amount} or stack a 2.`;
+  if (pending.kind === 'aceSpades')
+    return ` ${next} must draw 5 or pass it with an Ace.`;
   return ` ${next} is skipped unless they play an 8.`;
 }
 
@@ -166,7 +172,9 @@ export function startRound(previous: GameState): GameState {
   state.roundWinner = null;
   state.eliminatedThisRound = [];
   state.error = null;
-  state.message = `Round ${state.roundNumber}: ${state.players[state.currentPlayer].name} goes first.`;
+  state.message = `Round ${state.roundNumber}: ${
+    state.players[state.currentPlayer].name
+  } goes first.`;
   return state;
 }
 
@@ -197,7 +205,8 @@ function endRound(state: GameState, winner: number): GameState {
   if (active.every(over)) {
     let best = active[0];
     for (const i of active) {
-      if (state.players[i].totalScore < state.players[best].totalScore) best = i;
+      if (state.players[i].totalScore < state.players[best].totalScore)
+        best = i;
     }
     for (const i of active) {
       if (i !== best) {
@@ -246,7 +255,9 @@ function playCard(
   const problem = turnError(previous, action.playerIndex);
   if (problem) return withError(previous, problem);
 
-  const card = previous.players[action.playerIndex].hand.find(c => c.id === action.cardId);
+  const card = previous.players[action.playerIndex].hand.find(
+    c => c.id === action.cardId,
+  );
   if (!card) return withError(previous, 'That card is not in your hand.');
   if (!canPlayCard(previous, card)) {
     return withError(previous, `You can't play ${cardLabel(card)} right now.`);
@@ -273,7 +284,9 @@ function playCard(
   // Suit to follow from now on.
   if (card.rank === 'J' && action.chosenSuit) {
     state.activeSuit = action.chosenSuit;
-    message = `${player.name} played ${cardLabel(card)} and named ${SUIT_NAME[action.chosenSuit]}.`;
+    message = `${player.name} played ${cardLabel(card)} and named ${
+      SUIT_NAME[action.chosenSuit]
+    }.`;
   } else {
     state.activeSuit = card.suit;
   }
@@ -284,7 +297,10 @@ function playCard(
     // 2s stack: 2, 4, 6, 8 …
     const sofar = wasPending?.kind === 'twos' ? wasPending.amount : 0;
     state.pending = { kind: 'twos', amount: sofar + 2 };
-  } else if (isAceOfSpades(card) || (card.rank === 'A' && wasPending?.kind === 'aceSpades')) {
+  } else if (
+    isAceOfSpades(card) ||
+    (card.rank === 'A' && wasPending?.kind === 'aceSpades')
+  ) {
     // A♠ = draw 5. Another Ace passes it on; it stays at 5.
     state.pending = { kind: 'aceSpades', amount: 5 };
   } else if (card.rank === '8') {
@@ -322,7 +338,9 @@ function drawCard(previous: GameState, playerIndex: number): GameState {
   const name = state.players[playerIndex].name;
   const drawn = drawInto(state, playerIndex, 1);
   // A drawn card can't be played this turn, so drawing ends the turn.
-  state.message = drawn ? `${name} drew a card.` : `No cards left to draw – ${name} passes.`;
+  state.message = drawn
+    ? `${name} drew a card.`
+    : `No cards left to draw – ${name} passes.`;
   state.currentPlayer = nextActivePlayer(state.players, playerIndex);
   return state;
 }
@@ -330,7 +348,8 @@ function drawCard(previous: GameState, playerIndex: number): GameState {
 function acceptPenalty(previous: GameState, playerIndex: number): GameState {
   const problem = turnError(previous, playerIndex);
   if (problem) return withError(previous, problem);
-  if (!previous.pending) return withError(previous, 'There is no penalty to accept.');
+  if (!previous.pending)
+    return withError(previous, 'There is no penalty to accept.');
 
   const state = cloneState(previous);
   state.error = null;
@@ -361,7 +380,8 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
     case 'ACCEPT_PENALTY':
       return acceptPenalty(state, action.playerIndex);
     case 'NEXT_ROUND':
-      if (state.phase !== 'roundOver') return withError(state, 'The round is not over yet.');
+      if (state.phase !== 'roundOver')
+        return withError(state, 'The round is not over yet.');
       return startRound(state);
     case 'NEW_GAME':
       return createGame(action.players);

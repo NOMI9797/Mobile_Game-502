@@ -62,7 +62,8 @@ function makeState(opts: {
 
 const play = (s: GameState, p: number, id: string, chosenSuit?: Suit) =>
   gameReducer(s, { type: 'PLAY_CARD', playerIndex: p, cardId: id, chosenSuit });
-const draw = (s: GameState, p: number) => gameReducer(s, { type: 'DRAW_CARD', playerIndex: p });
+const draw = (s: GameState, p: number) =>
+  gameReducer(s, { type: 'DRAW_CARD', playerIndex: p });
 const accept = (s: GameState, p: number) =>
   gameReducer(s, { type: 'ACCEPT_PENALTY', playerIndex: p });
 
@@ -92,8 +93,12 @@ describe('deck & scoring', () => {
   });
 
   test('special cards are not valid starting cards', () => {
-    ['2C', 'JD', 'AH', 'AS', '7H'].forEach(id => expect(isValidStartCard(c(id))).toBe(false));
-    ['7S', '8D', 'KC'].forEach(id => expect(isValidStartCard(c(id))).toBe(true));
+    ['2C', 'JD', 'AH', 'AS', '7H'].forEach(id =>
+      expect(isValidStartCard(c(id))).toBe(false),
+    );
+    ['7S', '8D', 'KC'].forEach(id =>
+      expect(isValidStartCard(c(id))).toBe(true),
+    );
   });
 });
 
@@ -146,8 +151,12 @@ describe('basic play', () => {
   });
 
   test('9♣ matches any club or any 9', () => {
-    expect(canPlayCard(makeState({ hands: ['9C'], top: '4C' }), c('9C'))).toBe(true);
-    expect(canPlayCard(makeState({ hands: ['9C'], top: '9D' }), c('9C'))).toBe(true);
+    expect(canPlayCard(makeState({ hands: ['9C'], top: '4C' }), c('9C'))).toBe(
+      true,
+    );
+    expect(canPlayCard(makeState({ hands: ['9C'], top: '9D' }), c('9C'))).toBe(
+      true,
+    );
   });
 });
 
@@ -243,7 +252,11 @@ describe('8 – skip', () => {
 
 describe('ending a round', () => {
   test('7♥ ends the round; winner still counts their own hand', () => {
-    const s = play(makeState({ hands: ['7H KS', 'AS 4C'], top: '9C' }), 0, '7H');
+    const s = play(
+      makeState({ hands: ['7H KS', 'AS 4C'], top: '9C' }),
+      0,
+      '7H',
+    );
     expect(s.phase).toBe('roundOver');
     expect(s.roundWinner).toBe(0);
     expect(s.players[0].roundPoints).toBe(10);
@@ -308,7 +321,11 @@ describe('elimination & winning', () => {
   });
 
   test('next round: player with fewest points last round starts', () => {
-    let s = play(makeState({ hands: ['7H KS', '4C', 'QD'], top: '9C' }), 0, '7H');
+    let s = play(
+      makeState({ hands: ['7H KS', '4C', 'QD'], top: '9C' }),
+      0,
+      '7H',
+    );
     // round points: P0 10, P1 5, P2 10
     s = gameReducer(s, { type: 'NEXT_ROUND' });
     expect(s.roundNumber).toBe(2);
@@ -352,7 +369,10 @@ describe('full games (random moves)', () => {
     for (let g = 0; g < 200; g++) {
       const n = 2 + (g % 5); // 2..6 players
       let s = createGame(
-        Array.from({ length: n }, (_, i) => ({ name: `P${i}`, isHuman: i === 0 })),
+        Array.from({ length: n }, (_, i) => ({
+          name: `P${i}`,
+          isHuman: i === 0,
+        })),
       );
       let steps = 0;
       while (s.phase !== 'gameOver' && steps < 20000) {
@@ -372,7 +392,10 @@ describe('full games (random moves)', () => {
         }
         expect(s.error).toBeNull();
         if (s.phase === 'playing') {
-          const inHands = s.players.reduce((sum, pl) => sum + pl.hand.length, 0);
+          const inHands = s.players.reduce(
+            (sum, pl) => sum + pl.hand.length,
+            0,
+          );
           expect(inHands + s.drawPile.length + s.discardPile.length).toBe(52);
         }
       }

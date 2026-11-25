@@ -5,9 +5,28 @@
 import { Card, Rank, Suit } from './types';
 
 export const SUITS: Suit[] = ['S', 'H', 'D', 'C'];
-export const RANKS: Rank[] = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+export const RANKS: Rank[] = [
+  'A',
+  '2',
+  '3',
+  '4',
+  '5',
+  '6',
+  '7',
+  '8',
+  '9',
+  '10',
+  'J',
+  'Q',
+  'K',
+];
 
-export const SUIT_SYMBOL: Record<Suit, string> = { S: '♠', H: '♥', D: '♦', C: '♣' };
+export const SUIT_SYMBOL: Record<Suit, string> = {
+  S: '♠',
+  H: '♥',
+  D: '♦',
+  C: '♣',
+};
 export const SUIT_NAME: Record<Suit, string> = {
   S: 'Spades',
   H: 'Hearts',
@@ -27,7 +46,10 @@ export function createDeck(): Card[] {
 }
 
 /** Fisher–Yates shuffle. Returns a NEW array (does not change the input). */
-export function shuffle<T>(items: T[], random: () => number = Math.random): T[] {
+export function shuffle<T>(
+  items: T[],
+  random: () => number = Math.random,
+): T[] {
   const result = [...items];
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
@@ -36,8 +58,10 @@ export function shuffle<T>(items: T[], random: () => number = Math.random): T[] 
   return result;
 }
 
-export const isSevenOfHearts = (card: Card) => card.rank === '7' && card.suit === 'H';
-export const isAceOfSpades = (card: Card) => card.rank === 'A' && card.suit === 'S';
+export const isSevenOfHearts = (card: Card) =>
+  card.rank === '7' && card.suit === 'H';
+export const isAceOfSpades = (card: Card) =>
+  card.rank === 'A' && card.suit === 'S';
 
 /**
  * Penalty points for a card left in hand at the end of a round:
@@ -60,7 +84,12 @@ export function handPoints(hand: Card[]): number {
  * a 2, a Jack, any Ace, or the 7♥. If it is, it goes back and another is flipped.
  */
 export function isValidStartCard(card: Card): boolean {
-  return !(card.rank === '2' || card.rank === 'J' || card.rank === 'A' || isSevenOfHearts(card));
+  return !(
+    card.rank === '2' ||
+    card.rank === 'J' ||
+    card.rank === 'A' ||
+    isSevenOfHearts(card)
+  );
 }
 
 /** "7♥", "10♠" … */
