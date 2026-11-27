@@ -87,10 +87,10 @@ function pendingSuffix(state: GameState): string {
   const pending = state.pending;
   if (!pending) return '';
   if (pending.kind === 'twos')
-    return ` ${next} must draw ${pending.amount} or stack a 2.`;
+    return ` Next, ${next}: draw ${pending.amount} or stack a 2.`;
   if (pending.kind === 'aceSpades')
-    return ` ${next} must draw 5 or pass it with an Ace.`;
-  return ` ${next} is skipped unless they play an 8.`;
+    return ` Next, ${next}: draw 5 or pass it with an Ace.`;
+  return ` Next, ${next}: skipped unless an 8 is played.`;
 }
 
 // ---------------------------------------------------------------------------
