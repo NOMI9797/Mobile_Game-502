@@ -77,7 +77,7 @@ export default function GameScreen({ setups, onExit }: Props) {
   const confirmQuit = () =>
     Alert.alert('Leave game?', 'Your current game will be lost.', [
       { text: 'Stay', style: 'cancel' },
-      { text: 'Leave', style: 'destructive', onPress: onExit },
+      { text: 'Yes, leave', style: 'destructive', onPress: onExit },
     ]);
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -93,7 +93,7 @@ export default function GameScreen({ setups, onExit }: Props) {
       'Scores go back to 0 and new cards are dealt.',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Restart', style: 'destructive', onPress: game.restart },
+        { text: 'Yes, restart', style: 'destructive', onPress: game.restart },
       ],
     );
 

@@ -172,9 +172,9 @@ export function startRound(previous: GameState): GameState {
   state.roundWinner = null;
   state.eliminatedThisRound = [];
   state.error = null;
-  state.message = `Round ${state.roundNumber}: ${
+  state.message = `Round ${state.roundNumber} – first turn: ${
     state.players[state.currentPlayer].name
-  } goes first.`;
+  }.`;
   return state;
 }
 

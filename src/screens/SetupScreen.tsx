@@ -54,6 +54,7 @@ export default function SetupScreen({ onStart, onBack }: Props) {
 
         <Text style={styles.label}>Your name</Text>
         <TextInput
+          testID="name-input"
           value={name}
           onChangeText={setName}
           placeholder="You"

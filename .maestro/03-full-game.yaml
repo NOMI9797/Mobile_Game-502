@@ -1,0 +1,80 @@
+# Maestro UI test – play a COMPLETE game until someone wins, then replay.
+# The script plays for you: a lifted (playable) card if there is one,
+# otherwise it accepts the penalty or draws. Jacks name Hearts.
+# Screenshots are saved whenever a special situation shows up.
+appId: org.reactjs.native.example.Game502
+name: Full game to the end, then Play again
+---
+- launchApp:
+    clearState: true
+- tapOn: "PLAY"
+- tapOn: "2"
+- tapOn: "Deal cards"
+- assertVisible: "Round 1"
+
+- repeat:
+    while:
+      notVisible: "Play again"
+    commands:
+      # Round finished → screenshot the summary, start the next round
+      - runFlow:
+          when:
+            visible: "Next round|Watch the bots finish"
+          commands:
+            - takeScreenshot: .maestro/out/round-summary
+            - runFlow:
+                when:
+                  visible: "Eliminated: .*"
+                commands:
+                  - takeScreenshot: .maestro/out/eliminated
+            - tapOn: "Next round|Watch the bots finish"
+
+      # Jack played → suit picker → choose Hearts
+      - runFlow:
+          when:
+            visible: "Jack played – name a suit"
+          commands:
+            - takeScreenshot: .maestro/out/suit-picker
+            - tapOn: "Hearts"
+
+      # A penalty is waiting for you
+      - runFlow:
+          when:
+            visible: "Accept.*"
+          commands:
+            - takeScreenshot: .maestro/out/penalty
+
+      # Your turn: play a lifted card, or accept, or draw
+      - runFlow:
+          when:
+            visible:
+              id: "playable-.*"
+          commands:
+            - tapOn:
+                id: "playable-.*"
+      - runFlow:
+          when:
+            visible: "Accept.*"
+            notVisible:
+              id: "playable-.*"
+          commands:
+            - tapOn: "Accept.*"
+      - runFlow:
+          when:
+            visible: "No match – draw a card"
+          commands:
+            - tapOn: "No match – draw a card"
+
+# ---- Game over screen ----
+- assertVisible: "You win!|Game over"
+- assertVisible: "Play again"
+- assertVisible: "Main menu"
+- takeScreenshot: .maestro/out/game-over
+
+# ---- Replay: fresh game, scores back to 0 ----
+- tapOn: "Play again"
+- assertVisible: "Round 1"
+- assertVisible: "You · 0 pts"
+- tapOn: "Quit"
+- tapOn: "Yes, leave"
+- assertVisible: "PLAY"

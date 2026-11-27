@@ -1,0 +1,26 @@
+# Maestro UI test – the game rejects invalid actions with a clear message.
+appId: org.reactjs.native.example.Game502
+name: Invalid moves are rejected
+---
+- launchApp:
+    clearState: true
+- tapOn: "PLAY"
+- tapOn: "5"   # 5 bots = long gap before your next turn
+- tapOn: "Deal cards"
+- assertVisible: "Your turn"
+
+# Tapping a card that doesn't match → red message, still your turn.
+- runFlow:
+    when:
+      visible:
+        id: "card-.*"
+    commands:
+      - tapOn:
+          id: "card-.*"
+      - assertVisible: "You can't play .* right now."
+      - assertVisible: "Your turn"
+      - takeScreenshot: .maestro/out/invalid-card
+
+# Note: "It's not your turn." and drawing are checked in
+# __tests__/GameScreen.test.tsx, where timers can be controlled
+# (Maestro taps take seconds, so the bots finish their turns first).

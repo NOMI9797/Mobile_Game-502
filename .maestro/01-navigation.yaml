@@ -1,0 +1,79 @@
+# Maestro UI test – screens, setup options and menus.
+# Run:  maestro test .maestro/01-navigation.yaml   (app must be installed, Metro running)
+appId: org.reactjs.native.example.Game502
+name: Navigation, setup and in-game menus
+---
+- launchApp:
+    clearState: true
+
+# ---- Home screen ----
+- assertVisible: "502"
+- assertVisible: "Shed your cards. Stay under 502."
+- assertVisible: "PLAY"
+- takeScreenshot: docs/screenshots/home
+
+# ---- Setup: Back returns home ----
+- tapOn: "PLAY"
+- assertVisible: "New game"
+- tapOn: "Back"
+- assertVisible: "PLAY"
+
+# ---- Setup: opponent count changes the preview ----
+- tapOn: "PLAY"
+- tapOn: "5"
+- assertVisible: "6 players · 7 cards each"
+- assertVisible: "Zara"
+- tapOn: "1"
+- assertVisible: "2 players · 7 cards each"
+- assertNotVisible: "Rex"
+
+# ---- Setup: name longer than 12 letters is cut to 12 ----
+- tapOn:
+    id: "name-input"
+- inputText: "ABCDEFGHIJKLMNOP"
+- tapOn: "New game"   # tap outside the field to close the keyboard
+- tapOn: "Deal cards"
+- assertVisible: "Round 1"
+- assertVisible: "ABCDEFGHIJKL · 0 pts"
+- tapOn: "Quit"
+- tapOn: "Yes, leave"
+
+# ---- Setup: empty name becomes "You", 3 opponents ----
+- tapOn: "PLAY"
+- tapOn: "3"
+- takeScreenshot: docs/screenshots/setup
+- tapOn: "Deal cards"
+- assertVisible: "Round 1"
+- assertVisible: "You · 0 pts"
+- assertVisible: "Nova"
+- assertVisible: "Rex"
+- assertVisible: "Luna"
+- assertVisible: "Round 1 – first turn: You."
+- assertVisible: "Your turn"
+- assertVisible: "Follow .*"
+
+# ---- Scoreboard opens and closes ----
+- tapOn: "Scores"
+- assertVisible: "Scoreboard"
+- assertVisible: "502 points or more = eliminated"
+- tapOn: "Close"
+- assertNotVisible: "Scoreboard"
+
+# ---- Restart: cancel keeps the game, confirm deals a new one ----
+- tapOn: "Restart"
+- assertVisible: "Restart game?"
+- tapOn: "Cancel"
+- assertVisible: "Round 1"
+- tapOn: "Restart"
+- tapOn: "Yes, restart"
+- assertVisible: "Round 1 – first turn: You."
+- assertVisible: "Your turn"
+
+# ---- Quit: "Stay" keeps you in, "Yes, leave" goes home ----
+- tapOn: "Quit"
+- assertVisible: "Leave game?"
+- tapOn: "Stay"
+- assertVisible: "Round 1"
+- tapOn: "Quit"
+- tapOn: "Yes, leave"
+- assertVisible: "PLAY"

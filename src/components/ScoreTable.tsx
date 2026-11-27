@@ -33,7 +33,7 @@ export default function ScoreTable({ state }: { state: GameState }) {
               <Text style={[styles.cell, styles.nameCol]} numberOfLines={1}>
                 {state.roundWinner === i ? '★ ' : ''}
                 {p.name}
-                {p.isHuman ? ' (you)' : ''}
+                {p.isHuman && p.name !== 'You' ? ' (you)' : ''}
                 {justOut ? '  — OUT' : ''}
               </Text>
               <Text style={styles.cell}>

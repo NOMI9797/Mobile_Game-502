@@ -75,7 +75,7 @@ export default function GameOverModal({ state, onPlayAgain, onMenu }: Props) {
                 <Text style={styles.place}>{place + 1}</Text>
                 <Text style={styles.name}>
                   {p.name}
-                  {p.isHuman ? ' (you)' : ''}
+                  {p.isHuman && p.name !== 'You' ? ' (you)' : ''}
                 </Text>
                 <Text style={styles.score}>{p.totalScore}</Text>
               </View>

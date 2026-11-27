@@ -103,10 +103,21 @@ export default function PlayingCard({
   );
 
   return (
-    <Animated.View style={[{ transform: [{ translateY: lift }] }, style]}>
+    <Animated.View
+      style={[
+        { transform: [{ translateY: lift }] },
+        playable && styles.onTop, // playable cards sit above their neighbours
+        style,
+      ]}
+    >
       {onPress ? (
         <Pressable
           onPress={onPress}
+          // testID lets automated UI tests (Maestro / Jest) find cards,
+          // e.g. "playable-7H" for a card you are allowed to play.
+          testID={
+            card ? `${playable ? 'playable' : 'card'}-${card.id}` : 'draw-pile'
+          }
           accessibilityRole="button"
           accessibilityLabel={
             card ? `${card.rank} of ${card.suit}` : 'Draw pile'
@@ -138,6 +149,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   playable: { borderColor: colors.accent, borderWidth: 3 },
+  onTop: { zIndex: 2, elevation: 8 },
   // A solid dark layer on top (not opacity), so overlapping cards never show through.
   dimOverlay: {
     position: 'absolute',
