@@ -1,0 +1,51 @@
+# Maestro UI test – tapping a card that doesn't match shows the red
+# "Not allowed" warning that explains why, and it can be closed.
+appId: org.reactjs.native.example.Game502
+name: Wrong move shows the Not allowed warning
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Create Room"
+    timeout: 120000
+- tapOn: "Create Room"
+- tapOn: "Start game"
+- assertVisible: "Round 1"
+# Keep going until it's your turn AND you hold a card that doesn't match.
+- repeat:
+    while:
+      notVisible: "✋ Not allowed"
+    commands:
+      - runFlow:
+          when:
+            visible: "Your turn"
+          commands:
+            - runFlow:
+                when:
+                  visible:
+                    id: "card-.*"
+                  notVisible: "Accept.*"
+                commands:
+                  - tapOn:
+                      id: "card-.*"
+            - runFlow:
+                when:
+                  visible: "Accept.*"
+                commands:
+                  - tapOn: "Accept.*"
+            - runFlow:
+                when:
+                  notVisible:
+                    id: "card-.*"
+                  visible: "Draw a card|No match – draw a card"
+                commands:
+                  - tapOn: "Draw a card|No match – draw a card"
+      - runFlow:
+          when:
+            visible: "Next round"
+          commands:
+            - tapOn: "Next round"
+- assertVisible: "You can't play .*"
+- assertVisible: "Your turn"
+- tapOn: "Tap to close"
+- assertNotVisible: "✋ Not allowed"
