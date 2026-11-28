@@ -29,7 +29,9 @@ export default function TurnBanner({
   hint,
   urgent,
 }: Props) {
-  // Pulse while it's your turn so it's impossible to miss.
+  // Pulse 3 times when your turn starts so it's impossible to miss, then
+  // stay still (a never-ending animation is distracting, and UI test tools
+  // wait for the screen to stop moving).
   const pulse = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (mode !== 'you') {
@@ -50,6 +52,7 @@ export default function TurnBanner({
           useNativeDriver: true,
         }),
       ]),
+      { iterations: 3 },
     );
     loop.start();
     return () => loop.stop();

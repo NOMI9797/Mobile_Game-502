@@ -1,0 +1,91 @@
+# Maestro – takes the README screenshots of the current app.
+# Run from the project root:  maestro test .maestro/08-screenshots.yaml
+appId: org.reactjs.native.example.Game502
+name: README screenshots
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Create Room"
+    timeout: 120000
+- takeScreenshot: docs/screenshots/home
+
+- tapOn: "How to play"
+- assertVisible: "How to play 502"
+- takeScreenshot: docs/screenshots/how-to-play
+- tapOn: "Got it"
+
+- tapOn: "Create Room"
+- tapOn:
+    id: "name-input"
+- inputText: "Nouman"
+- tapOn:
+    id: "bot-name-0"
+- inputText: "Ali"
+- tapOn:
+    id: "bot-name-1"
+- inputText: "Sara"
+- tapOn: "Your room" # close the keyboard
+- takeScreenshot: docs/screenshots/setup
+- tapOn: "Start game"
+- extendedWaitUntil:
+    visible: "Your turn"
+    timeout: 20000
+- takeScreenshot: docs/screenshots/game
+
+# ---- Wrong move → "Not allowed" warning ----
+# (flat steps – Maestro is unreliable with nested conditions)
+- repeat:
+    while:
+      notVisible: "Tap to close"
+    commands:
+      - runFlow:
+          when:
+            visible:
+              id: "card-.*"
+          commands:
+            - tapOn:
+                id: "card-.*"
+            - waitForAnimationToEnd:
+                timeout: 1200
+      - runFlow:
+          when:
+            visible: "No match – draw a card"
+          commands:
+            - tapOn: "No match – draw a card"
+- assertVisible: "✋ Not allowed"
+- takeScreenshot: docs/screenshots/warning
+- tapOn: "Tap to close"
+
+# ---- Play properly until the round ends ----
+- repeat:
+    while:
+      notVisible: "Next round|Watch the bots finish|Play again"
+    commands:
+      - runFlow:
+          when:
+            visible: "Jack played – name a suit"
+          commands:
+            - tapOn: "Hearts"
+      - runFlow:
+          when:
+            visible:
+              id: "playable-.*"
+          commands:
+            - tapOn:
+                id: "playable-.*"
+      - runFlow:
+          when:
+            visible: "Accept.*"
+            notVisible:
+              id: "playable-.*"
+          commands:
+            - tapOn: "Accept.*"
+      - runFlow:
+          when:
+            visible: "No match – draw a card"
+          commands:
+            - tapOn: "No match – draw a card"
+- waitForAnimationToEnd:
+    timeout: 1500
+- takeScreenshot: docs/screenshots/round

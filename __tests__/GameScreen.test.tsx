@@ -120,7 +120,7 @@ describe('your turn', () => {
     await act(() => jest.advanceTimersByTime(3600));
     expect(screen.queryByText('✋ Not allowed')).not.toBeOnTheScreen();
     await press(screen.getByTestId('card-4D'));
-    await press(screen.getByLabelText('Dismiss warning'));
+    await press(screen.getByText('Tap to close'));
     expect(screen.queryByText('✋ Not allowed')).not.toBeOnTheScreen();
   });
 

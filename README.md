@@ -150,8 +150,10 @@ The reference site leaves a few details open, so we chose:
 
 ## Screenshots
 
-_Add the screenshots to `docs/screenshots/` and they appear here._
+| Home | How to play | Create Room | Game |
+|---|---|---|---|
+| ![](docs/screenshots/home.png) | ![](docs/screenshots/how-to-play.png) | ![](docs/screenshots/setup.png) | ![](docs/screenshots/game.png) |
 
-| Home | Setup | Game | Round summary | Winner |
-|---|---|---|---|---|
-| ![](docs/screenshots/home.png) | ![](docs/screenshots/setup.png) | ![](docs/screenshots/game.png) | ![](docs/screenshots/round.png) | ![](docs/screenshots/winner.png) |
+| Wrong move warning | Round summary | Game over | Winner |
+|---|---|---|---|
+| ![](docs/screenshots/warning.png) | ![](docs/screenshots/round.png) | ![](docs/screenshots/game-over-bot-wins.png) | ![](docs/screenshots/winner.png) |

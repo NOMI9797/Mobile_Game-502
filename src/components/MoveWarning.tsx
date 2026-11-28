@@ -38,7 +38,9 @@ export default function MoveWarning({ message, id, onDismiss }: Props) {
       accessibilityRole="alert"
       accessibilityLiveRegion="assertive"
     >
-      <Pressable onPress={onDismiss} accessibilityLabel="Dismiss warning">
+      {/* accessible={false}: the texts stay separate, so screen readers
+          (and UI tests) read the warning itself, not just a button label. */}
+      <Pressable onPress={onDismiss} accessible={false}>
         <Text style={styles.title}>✋ Not allowed</Text>
         <Text style={styles.text}>{message}</Text>
         <Text style={styles.dismiss}>Tap to close</Text>
