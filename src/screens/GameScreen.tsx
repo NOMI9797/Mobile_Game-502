@@ -295,6 +295,16 @@ export default function GameScreen({ setups, onExit }: Props) {
 
       {/* Table */}
       <View style={styles.table}>
+        {/* Penalty strip at the TOP of the table, so the "Not allowed"
+            warning (at the bottom) never covers it. */}
+        {penalty && (
+          <View style={styles.penalty}>
+            <Text style={styles.penaltyText}>
+              {current.isHuman ? 'You: ' : `${current.name}: `}
+              {penalty}
+            </Text>
+          </View>
+        )}
         <View style={styles.piles}>
           <View style={styles.pileBox}>
             <PlayingCard
@@ -351,14 +361,6 @@ export default function GameScreen({ setups, onExit }: Props) {
             </Text>
           ))}
         </View>
-        {penalty && (
-          <View style={styles.penalty}>
-            <Text style={styles.penaltyText}>
-              {current.isHuman ? 'You: ' : `${current.name}: `}
-              {penalty}
-            </Text>
-          </View>
-        )}
         {/* Wrong move → "Not allowed" box over the bottom of the table */}
         <MoveWarning
           message={warning?.text ?? null}
@@ -531,7 +533,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   penalty: {
-    marginTop: spacing.sm,
+    marginBottom: spacing.md,
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
     borderRadius: radius.pill,
