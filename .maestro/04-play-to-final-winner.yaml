@@ -1,0 +1,48 @@
+# Maestro UI test – fastest way to reach the END of a real game on the device.
+# 1 bot. "You" never plays a card: only draws or accepts penalties, so your
+# points climb fast and you are knocked out in a few rounds. The game must then
+# show the final winner screen, and "Play again" must start a fresh game.
+appId: org.reactjs.native.example.Game502
+name: Play to the final winner, then Play again
+---
+- launchApp:
+    clearState: true
+- tapOn: "Create Room"
+- tapOn: "Remove Rex"   # 1 bot: the game ends sooner
+- tapOn: "Start game"
+- assertVisible: "Round 1"
+
+- repeat:
+    while:
+      notVisible: "Play again"
+    commands:
+      - runFlow:
+          when:
+            visible: "Next round|Watch the bots finish"
+          commands:
+            - tapOn: "Next round|Watch the bots finish"
+      - runFlow:
+          when:
+            visible: "Accept.*"
+          commands:
+            - tapOn: "Accept.*"
+      - runFlow:
+          when:
+            visible: "Your turn"
+            notVisible: "Accept.*"
+          commands:
+            - tapOn: "Draw a card|No match – draw a card"
+
+# ---- Final winner screen ----
+- assertVisible: "Game over|.*wins.*"
+- assertVisible: "Play again"
+- assertVisible: "Main menu"
+- takeScreenshot: game-over
+
+# ---- Play again: fresh game, scores back to 0 ----
+- tapOn: "Play again"
+- assertVisible: "Round 1"
+- assertVisible: "You · 0 pts"
+- tapOn: "Quit"
+- tapOn: "Yes, leave"
+- assertVisible: "Create Room"

@@ -1,6 +1,6 @@
 /**
  * App.tsx
- * Root component. Holds which screen is showing (home → setup → game) and the
+ * Root component. Holds which screen is showing (home → room → game) and the
  * chosen players. A simple state switch is enough for three screens, so no
  * navigation library is needed.
  *
@@ -13,10 +13,10 @@ import ErrorBoundary from './src/components/ErrorBoundary';
 import { PlayerSetup } from './src/engine';
 import GameScreen from './src/screens/GameScreen';
 import HomeScreen from './src/screens/HomeScreen';
-import SetupScreen from './src/screens/SetupScreen';
+import RoomScreen from './src/screens/RoomScreen';
 import { colors } from './src/theme';
 
-type Screen = 'home' | 'setup' | 'game';
+type Screen = 'home' | 'room' | 'game';
 
 function App() {
   const [screen, setScreen] = useState<Screen>('home');
@@ -37,12 +37,12 @@ function App() {
         <ErrorBoundary onReset={() => setScreen('home')}>
           {screen === 'home' && (
             <SafeAreaView style={styles.root}>
-              <HomeScreen onPlay={() => setScreen('setup')} />
+              <HomeScreen onCreateRoom={() => setScreen('room')} />
             </SafeAreaView>
           )}
-          {screen === 'setup' && (
+          {screen === 'room' && (
             <SafeAreaView style={styles.root}>
-              <SetupScreen
+              <RoomScreen
                 onStart={startGame}
                 onBack={() => setScreen('home')}
               />

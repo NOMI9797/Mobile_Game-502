@@ -9,46 +9,46 @@ name: Navigation, setup and in-game menus
 # ---- Home screen ----
 - assertVisible: "502"
 - assertVisible: "Shed your cards. Stay under 502."
-- assertVisible: "PLAY"
+- assertVisible: "Create Room"
 - takeScreenshot: docs/screenshots/home
 
-# ---- Setup: Back returns home ----
-- tapOn: "PLAY"
-- assertVisible: "New game"
+# ---- How to play ----
+- tapOn: "How to play"
+- assertVisible: "How to play 502"
+- tapOn: "Got it"
+
+# ---- Room: Back returns home ----
+- tapOn: "Create Room"
+- assertVisible: "Your room"
 - tapOn: "Back"
-- assertVisible: "PLAY"
+- assertVisible: "Create Room"
 
-# ---- Setup: opponent count changes the preview ----
-- tapOn: "PLAY"
-- tapOn: "5"
-- assertVisible: "6 players · 7 cards each"
-- assertVisible: "Zara"
-- tapOn: "1"
-- assertVisible: "2 players · 7 cards each"
-- assertNotVisible: "Rex"
+# ---- Room: you + 2 bots by default; add and remove bots ----
+- tapOn: "Create Room"
+- assertVisible: "Players at the table · 3/6"
+- tapOn: "+ Add AI bot"
+- assertVisible: "Players at the table · 4/6"
+- tapOn: "Remove Luna"
+- assertVisible: "Players at the table · 3/6"
 
-# ---- Setup: name longer than 12 letters is cut to 12 ----
+# ---- Room: rename you and both bots ----
 - tapOn:
     id: "name-input"
-- inputText: "ABCDEFGHIJKLMNOP"
-- tapOn: "New game"   # tap outside the field to close the keyboard
-- tapOn: "Deal cards"
-- assertVisible: "Round 1"
-- assertVisible: "ABCDEFGHIJKL · 0 pts"
-- tapOn: "Quit"
-- tapOn: "Yes, leave"
-
-# ---- Setup: empty name becomes "You", 3 opponents ----
-- tapOn: "PLAY"
-- tapOn: "3"
+- inputText: "Nouman"
+- tapOn:
+    id: "bot-name-0"
+- inputText: "Ali"
+- tapOn:
+    id: "bot-name-1"
+- inputText: "Sara"
+- tapOn: "Your room"   # tap outside the field to close the keyboard
 - takeScreenshot: docs/screenshots/setup
-- tapOn: "Deal cards"
+- tapOn: "Start game"
 - assertVisible: "Round 1"
-- assertVisible: "You · 0 pts"
-- assertVisible: "Nova"
-- assertVisible: "Rex"
-- assertVisible: "Luna"
-- assertVisible: "Round 1 – first turn: You."
+- assertVisible: "Nouman · 0 pts"
+- assertVisible: "Ali"
+- assertVisible: "Sara"
+- assertVisible: "Round 1 – first turn: Nouman."
 - assertVisible: "Your turn"
 - assertVisible: "Follow .*"
 
@@ -66,7 +66,7 @@ name: Navigation, setup and in-game menus
 - assertVisible: "Round 1"
 - tapOn: "Restart"
 - tapOn: "Yes, restart"
-- assertVisible: "Round 1 – first turn: You."
+- assertVisible: "Round 1 – first turn: Nouman."
 - assertVisible: "Your turn"
 
 # ---- Quit: "Stay" keeps you in, "Yes, leave" goes home ----
@@ -76,4 +76,4 @@ name: Navigation, setup and in-game menus
 - assertVisible: "Round 1"
 - tapOn: "Quit"
 - tapOn: "Yes, leave"
-- assertVisible: "PLAY"
+- assertVisible: "Create Room"

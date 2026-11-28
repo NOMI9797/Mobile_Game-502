@@ -1,9 +1,11 @@
 /**
  * GameScreen.tsx
  * The game table:
- *   top    – round number, Scores and Menu buttons, the bots' seats
- *   middle – draw pile, discard pile, suit to follow, status / penalty banner
- *   bottom – your hand (playable cards lifted) and the Draw / Accept button
+ *   top    – round number, How to play / Scores / Restart / Quit, the bots' seats
+ *   banner – WHOSE TURN it is, plus a hint telling you what you can do
+ *   middle – draw pile, top card, suit to follow, penalty, the last moves
+ *   bottom – your hand (playable cards raised) and the Draw / Accept button;
+ *            a wrong move shows a red "Not allowed" warning explaining why
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -20,13 +22,17 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import AppButton from '../components/AppButton';
 import GameOverModal from '../components/GameOverModal';
+import HowToPlayModal from '../components/HowToPlayModal';
+import MoveWarning from '../components/MoveWarning';
 import OpponentSeat from '../components/OpponentSeat';
 import PlayingCard from '../components/PlayingCard';
 import RoundSummaryModal from '../components/RoundSummaryModal';
 import ScoreTable from '../components/ScoreTable';
 import SuitPicker from '../components/SuitPicker';
+import TurnBanner, { TurnMode } from '../components/TurnBanner';
 import {
   Card,
+  GameState,
   PlayerSetup,
   RANKS,
   SUITS,
@@ -36,6 +42,7 @@ import {
   canPlayCard,
   pendingText,
   topCard,
+  turnHint,
 } from '../engine';
 import { useGame } from '../hooks/useGame';
 import { colors, font, radius, spacing } from '../theme';
@@ -63,15 +70,32 @@ export default function GameScreen({ setups, onExit }: Props) {
 
   const [jackToPlay, setJackToPlay] = useState<string | null>(null);
   const [showScores, setShowScores] = useState(false);
-  const [toast, setToast] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false);
+  const [warning, setWarning] = useState<{ text: string; id: number } | null>(
+    null,
+  );
+  const [moves, setMoves] = useState<string[]>([]);
 
-  // ----- invalid move feedback: show the engine's error for 2 seconds -----
+  // ----- every new state: a wrong move → warning; a real move → move list ---
+  const lastState = useRef<GameState | null>(null);
   useEffect(() => {
-    if (!state.error) return;
-    setToast(state.error);
-    const timer = setTimeout(() => setToast(null), 2000);
-    return () => clearTimeout(timer);
+    if (state === lastState.current) return;
+    lastState.current = state;
+    if (state.error) {
+      const text = state.error;
+      setWarning(w => ({ text, id: (w?.id ?? 0) + 1 }));
+      return;
+    }
+    setWarning(null);
+    setMoves(m => [state.message, ...m].slice(0, 3)); // newest first
   }, [state]);
+
+  // The warning closes by itself after 3.5 seconds (or when tapped).
+  useEffect(() => {
+    if (!warning) return;
+    const timer = setTimeout(() => setWarning(null), 3500);
+    return () => clearTimeout(timer);
+  }, [warning]);
 
   // ----- Android back button: ask before leaving a game -----
   const confirmQuit = () =>
@@ -190,11 +214,19 @@ export default function GameScreen({ setups, onExit }: Props) {
   const current = state.players[state.currentPlayer];
   const penalty = pendingText(state);
   const jackChangedSuit = top.rank === 'J' && state.activeSuit !== top.suit;
-  const turnLabel = me.eliminated
-    ? 'You are out – watching the bots'
+  const turnMode: TurnMode = me.eliminated
+    ? 'out'
+    : state.phase !== 'playing'
+    ? 'idle'
     : isHumanTurn
-    ? 'Your turn'
-    : `${current.name} is thinking…`;
+    ? 'you'
+    : 'bot';
+  const turnTitle = {
+    out: 'You are out – watching the bots',
+    idle: 'Round over',
+    you: 'Your turn',
+    bot: `${current.name} is thinking…`,
+  }[turnMode];
 
   return (
     <View style={[styles.container, { paddingTop: insets.top + spacing.sm }]}>
@@ -203,10 +235,18 @@ export default function GameScreen({ setups, onExit }: Props) {
         <Text style={styles.round}>Round {state.roundNumber}</Text>
         <View style={styles.topButtons}>
           <AppButton
+            title="?"
+            size="small"
+            variant="secondary"
+            onPress={() => setShowHelp(true)}
+            style={styles.helpButton}
+          />
+          <AppButton
             title="Scores"
             size="small"
             variant="secondary"
             onPress={() => setShowScores(true)}
+            style={styles.topButton}
           />
           <AppButton
             title="Restart"
@@ -244,6 +284,15 @@ export default function GameScreen({ setups, onExit }: Props) {
         )}
       </ScrollView>
 
+      {/* Whose turn + what you can do */}
+      <TurnBanner
+        mode={turnMode}
+        title={turnTitle}
+        initial={current.name[0]}
+        hint={turnMode === 'you' ? turnHint(state, humanIndex) : null}
+        urgent={!!state.pending}
+      />
+
       {/* Table */}
       <View style={styles.table}>
         <View style={styles.piles}>
@@ -254,7 +303,9 @@ export default function GameScreen({ setups, onExit }: Props) {
               dimmed={!isHumanTurn || !!state.pending}
               onPress={game.drawCard}
             />
-            <Text style={styles.pileLabel}>Draw · {state.drawPile.length}</Text>
+            <Text style={styles.pileLabel}>
+              Draw pile · {state.drawPile.length}
+            </Text>
           </View>
           <View style={styles.pileBox}>
             <Animated.View
@@ -264,7 +315,7 @@ export default function GameScreen({ setups, onExit }: Props) {
             >
               <PlayingCard card={top} size="lg" />
             </Animated.View>
-            <Text style={styles.pileLabel}>Discard</Text>
+            <Text style={styles.pileLabel}>Top card</Text>
           </View>
         </View>
 
@@ -288,9 +339,18 @@ export default function GameScreen({ setups, onExit }: Props) {
           </Text>
         </View>
 
-        <Text style={styles.message} numberOfLines={2}>
-          {state.message}
-        </Text>
+        {/* Last moves, newest first */}
+        <View style={styles.moves}>
+          {moves.map((m, i) => (
+            <Text
+              key={i}
+              style={i === 0 ? styles.message : styles.oldMove}
+              numberOfLines={2}
+            >
+              {m}
+            </Text>
+          ))}
+        </View>
         {penalty && (
           <View style={styles.penalty}>
             <Text style={styles.penaltyText}>
@@ -299,6 +359,12 @@ export default function GameScreen({ setups, onExit }: Props) {
             </Text>
           </View>
         )}
+        {/* Wrong move → "Not allowed" box over the bottom of the table */}
+        <MoveWarning
+          message={warning?.text ?? null}
+          id={warning?.id ?? 0}
+          onDismiss={() => setWarning(null)}
+        />
       </View>
 
       {/* Your area */}
@@ -311,18 +377,12 @@ export default function GameScreen({ setups, onExit }: Props) {
       >
         <View style={styles.myHeader}>
           <Text style={[styles.turn, isHumanTurn && styles.turnActive]}>
-            {turnLabel}
+            Your cards · {me.hand.length}
           </Text>
           <Text style={styles.myScore}>
             {me.name} · {me.totalScore} pts
           </Text>
         </View>
-
-        {toast && (
-          <View style={styles.toast}>
-            <Text style={styles.toastText}>{toast}</Text>
-          </View>
-        )}
 
         <Animated.View
           style={{ transform: [{ translateY: dealY }], opacity: deal }}
@@ -372,6 +432,7 @@ export default function GameScreen({ setups, onExit }: Props) {
       </View>
 
       {/* Pop-ups */}
+      <HowToPlayModal visible={showHelp} onClose={() => setShowHelp(false)} />
       <SuitPicker
         visible={jackToPlay !== null}
         onPick={onPickSuit}
@@ -418,6 +479,7 @@ const styles = StyleSheet.create({
   round: { color: colors.text, fontSize: font.title, fontWeight: '900' },
   topButtons: { flexDirection: 'row' },
   topButton: { marginLeft: spacing.sm },
+  helpButton: { minWidth: 36 },
   opponents: { flexGrow: 0, marginTop: spacing.md },
   opponentsContent: {
     paddingHorizontal: spacing.lg,
@@ -426,7 +488,8 @@ const styles = StyleSheet.create({
   },
   table: {
     flex: 1,
-    margin: spacing.lg,
+    marginHorizontal: spacing.lg,
+    marginVertical: spacing.md,
     borderRadius: radius.lg,
     backgroundColor: colors.table,
     borderWidth: 2,
@@ -454,11 +517,18 @@ const styles = StyleSheet.create({
   suitChipJack: { borderWidth: 1.5, borderColor: colors.accent },
   suitSymbol: { fontSize: font.title, marginRight: 6 },
   suitText: { color: colors.text, fontWeight: '700' },
+  moves: { marginTop: spacing.md, alignItems: 'center' },
   message: {
     color: colors.text,
     textAlign: 'center',
-    marginTop: spacing.md,
     fontSize: font.body,
+    fontWeight: '700',
+  },
+  oldMove: {
+    color: colors.textMuted,
+    textAlign: 'center',
+    fontSize: font.small,
+    marginTop: 2,
   },
   penalty: {
     marginTop: spacing.sm,
@@ -485,14 +555,6 @@ const styles = StyleSheet.create({
   turn: { color: colors.textMuted, fontWeight: '800' },
   turnActive: { color: colors.accent },
   myScore: { color: colors.textMuted },
-  toast: {
-    marginHorizontal: spacing.lg,
-    marginTop: spacing.sm,
-    padding: spacing.sm,
-    borderRadius: radius.sm,
-    backgroundColor: colors.danger,
-  },
-  toastText: { color: colors.text, fontWeight: '700', textAlign: 'center' },
   handContent: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg + 4,

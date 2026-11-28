@@ -7,9 +7,9 @@ name: Full game to the end, then Play again
 ---
 - launchApp:
     clearState: true
-- tapOn: "PLAY"
-- tapOn: "1"   # 1 bot: the game ends as soon as one player reaches 502
-- tapOn: "Deal cards"
+- tapOn: "Create Room"
+- tapOn: "Remove Rex"   # 1 bot: the game ends sooner
+- tapOn: "Start game"
 - assertVisible: "Round 1"
 
 - repeat:
@@ -77,4 +77,4 @@ name: Full game to the end, then Play again
 - assertVisible: "You · 0 pts"
 - tapOn: "Quit"
 - tapOn: "Yes, leave"
-- assertVisible: "PLAY"
+- assertVisible: "Create Room"

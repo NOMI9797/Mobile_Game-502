@@ -4,9 +4,11 @@ name: Invalid moves are rejected
 ---
 - launchApp:
     clearState: true
-- tapOn: "PLAY"
-- tapOn: "5"   # 5 bots = long gap before your next turn
-- tapOn: "Deal cards"
+- tapOn: "Create Room"
+- tapOn: "+ Add AI bot"   # 5 bots = long gap before your next turn
+- tapOn: "+ Add AI bot"
+- tapOn: "+ Add AI bot"
+- tapOn: "Start game"
 - assertVisible: "Your turn"
 
 # Tapping a card that doesn't match → red message, still your turn.

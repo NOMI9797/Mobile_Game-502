@@ -72,6 +72,7 @@ export default function OpponentSeat({ player, isTurn, width }: Props) {
         </View>
       )}
       <Text style={styles.score}>{player.totalScore} pts</Text>
+      {isTurn ? <Text style={styles.playing}>▶ Playing</Text> : null}
     </Animated.View>
   );
 }
@@ -108,4 +109,10 @@ const styles = StyleSheet.create({
   count: { color: colors.text, marginLeft: 4, fontWeight: '800' },
   outText: { color: colors.danger, fontWeight: '900', marginTop: 8 },
   score: { color: colors.textMuted, fontSize: 11, marginTop: 4 },
+  playing: {
+    color: colors.accent,
+    fontSize: 11,
+    fontWeight: '900',
+    marginTop: 2,
+  },
 });

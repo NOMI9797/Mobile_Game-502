@@ -12,7 +12,7 @@ import { Card, GameState, Pending, Rank, Suit } from '../src/engine';
 import * as game from '../src/engine/game';
 import GameScreen from '../src/screens/GameScreen';
 import HomeScreen from '../src/screens/HomeScreen';
-import SetupScreen from '../src/screens/SetupScreen';
+import RoomScreen from '../src/screens/RoomScreen';
 
 jest.mock(
   'react-native-safe-area-context',
@@ -80,8 +80,8 @@ async function startAt(state: GameState) {
 
 const press = (el: Parameters<typeof fireEvent.press>[0]) =>
   fireEvent.press(el);
-/** Let the bots take their turns (they wait 0.9 s each). */
-const botsMove = (ms = 1000) => act(() => jest.advanceTimersByTime(ms));
+/** Let the bots take their turns (they wait 1.3 s each). */
+const botsMove = (ms = 1400) => act(() => jest.advanceTimersByTime(ms));
 
 beforeEach(() => jest.useFakeTimers());
 afterEach(() => {
@@ -101,21 +101,53 @@ describe('your turn', () => {
     expect(screen.getByTestId('card-4D')).toBeOnTheScreen(); // not playable
   });
 
-  test('wrong card → error message, nothing changes', async () => {
+  test('wrong card → "Not allowed" warning explains why, nothing changes', async () => {
     await startAt(makeState({ hands: ['5H 4D', 'KS', 'KD'], top: '9H' }));
     await press(screen.getByTestId('card-4D'));
-    expect(screen.getByText("You can't play 4♦ right now.")).toBeOnTheScreen();
+    expect(screen.getByText('✋ Not allowed')).toBeOnTheScreen();
+    expect(
+      screen.getByText(
+        "You can't play 4♦: it doesn't match. Play a ♥ Hearts card or a 9. Jacks and 7♥ are wild.",
+      ),
+    ).toBeOnTheScreen();
     expect(screen.getByText('Your turn')).toBeOnTheScreen();
     expect(screen.getByTestId('card-4D')).toBeOnTheScreen();
   });
 
-  test('error message disappears after 2 seconds', async () => {
+  test('warning closes after 3.5 seconds, or when tapped', async () => {
     await startAt(makeState({ hands: ['5H 4D', 'KS', 'KD'], top: '9H' }));
     await press(screen.getByTestId('card-4D'));
-    await act(() => jest.advanceTimersByTime(2100));
+    await act(() => jest.advanceTimersByTime(3600));
+    expect(screen.queryByText('✋ Not allowed')).not.toBeOnTheScreen();
+    await press(screen.getByTestId('card-4D'));
+    await press(screen.getByLabelText('Dismiss warning'));
+    expect(screen.queryByText('✋ Not allowed')).not.toBeOnTheScreen();
+  });
+
+  test('your turn shows a hint saying what you can play', async () => {
+    await startAt(makeState({ hands: ['5H 4D', 'KS', 'KD'], top: '9H' }));
     expect(
-      screen.queryByText("You can't play 4♦ right now."),
-    ).not.toBeOnTheScreen();
+      screen.getByText(
+        'Tap a raised card: a ♥ Hearts card or a 9. Jacks and 7♥ are wild. Or draw a card.',
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  test('no playable card → hint says to draw', async () => {
+    await startAt(makeState({ hands: ['4D 5C', 'KS', 'KD'], top: '9H' }));
+    expect(
+      screen.getByText(
+        'Nothing matches – you need a ♥ Hearts card or a 9. Tap "No match – draw a card".',
+      ),
+    ).toBeOnTheScreen();
+  });
+
+  test('"?" opens How to play during a game', async () => {
+    await startAt(makeState({ hands: ['5H 4D', 'KS', 'KD'], top: '9H' }));
+    await press(screen.getByText('?'));
+    expect(screen.getByText('How to play 502')).toBeOnTheScreen();
+    await press(screen.getByText('Got it'));
+    expect(screen.queryByText('How to play 502')).not.toBeOnTheScreen();
   });
 
   test('valid card is played, then the bots take their turns', async () => {
@@ -136,7 +168,9 @@ describe('your turn', () => {
     );
     expect(screen.getByText('Nova is thinking…')).toBeOnTheScreen();
     await press(screen.getByTestId('card-5H'));
-    expect(screen.getByText("It's not your turn.")).toBeOnTheScreen();
+    expect(
+      screen.getByText("It's not your turn – wait for Nova."),
+    ).toBeOnTheScreen();
   });
 
   test('drawing adds one card and ends your turn', async () => {
@@ -240,7 +274,9 @@ describe('penalties', () => {
     );
     await press(screen.getByTestId('draw-pile'));
     expect(
-      screen.getByText('Answer the penalty or accept it first.'),
+      screen.getByText(
+        'You must answer the penalty first: play a matching card or tap Accept.',
+      ),
     ).toBeOnTheScreen();
   });
 
@@ -425,39 +461,94 @@ describe('menus', () => {
 
 // ---------- other screens -------------------------------------------------------
 
-describe('home and setup', () => {
-  test('PLAY opens setup', async () => {
-    const onPlay = jest.fn();
-    await render(<HomeScreen onPlay={onPlay} />);
-    await press(screen.getByText('PLAY'));
-    expect(onPlay).toHaveBeenCalled();
+describe('home and room', () => {
+  test('Create Room opens the room; How to play opens the rules', async () => {
+    const onCreateRoom = jest.fn();
+    await render(<HomeScreen onCreateRoom={onCreateRoom} />);
+    await press(screen.getByText('Create Room'));
+    expect(onCreateRoom).toHaveBeenCalled();
+    await press(screen.getByText('How to play'));
+    expect(screen.getByText('How to play 502')).toBeOnTheScreen();
   });
 
-  test('blank name becomes "You"; chosen number of bots is used', async () => {
+  test('room starts with you + 2 AI bots (Nova, Rex) and a room code', async () => {
     const onStart = jest.fn();
-    await render(<SetupScreen onStart={onStart} onBack={jest.fn()} />);
-    await fireEvent.changeText(screen.getByTestId('name-input'), '   ');
-    await press(screen.getByText('5'));
-    expect(screen.getByText('6 players · 7 cards each')).toBeOnTheScreen();
-    await press(screen.getByText('Deal cards'));
+    await render(<RoomScreen onStart={onStart} onBack={jest.fn()} />);
+    expect(screen.getByText('Players at the table · 3/6')).toBeOnTheScreen();
+    expect(screen.getByTestId('room-code').props.children).toMatch(
+      /^[A-Z2-9]{4}$/,
+    );
+    await press(screen.getByText('Start game'));
     expect(onStart).toHaveBeenCalledWith([
       { name: 'You', isHuman: true },
       { name: 'Nova', isHuman: false },
       { name: 'Rex', isHuman: false },
-      { name: 'Luna', isHuman: false },
-      { name: 'Milo', isHuman: false },
-      { name: 'Zara', isHuman: false },
     ]);
   });
 
-  test('name is trimmed', async () => {
+  test('you and the bots can be renamed; names are trimmed', async () => {
     const onStart = jest.fn();
-    await render(<SetupScreen onStart={onStart} onBack={jest.fn()} />);
+    await render(<RoomScreen onStart={onStart} onBack={jest.fn()} />);
     await fireEvent.changeText(screen.getByTestId('name-input'), '  Norman  ');
-    await press(screen.getByText('Deal cards'));
-    expect(onStart.mock.calls[0][0][0]).toEqual({
-      name: 'Norman',
-      isHuman: true,
-    });
+    await fireEvent.changeText(screen.getByTestId('bot-name-0'), 'Ali');
+    await fireEvent.changeText(screen.getByTestId('bot-name-1'), ' Sara ');
+    await press(screen.getByText('Start game'));
+    expect(onStart).toHaveBeenCalledWith([
+      { name: 'Norman', isHuman: true },
+      { name: 'Ali', isHuman: false },
+      { name: 'Sara', isHuman: false },
+    ]);
+  });
+
+  test('blank names fall back to the defaults', async () => {
+    const onStart = jest.fn();
+    await render(<RoomScreen onStart={onStart} onBack={jest.fn()} />);
+    await fireEvent.changeText(screen.getByTestId('name-input'), '   ');
+    await fireEvent.changeText(screen.getByTestId('bot-name-1'), '   ');
+    await press(screen.getByText('Start game'));
+    expect(
+      onStart.mock.calls[0][0].map((p: { name: string }) => p.name),
+    ).toEqual(['You', 'Nova', 'Rex']);
+  });
+
+  test('add bots up to 5 and remove down to 1', async () => {
+    const onStart = jest.fn();
+    await render(<RoomScreen onStart={onStart} onBack={jest.fn()} />);
+    for (let i = 0; i < 3; i++) await press(screen.getByText('+ Add AI bot'));
+    expect(screen.getByText('Players at the table · 6/6')).toBeOnTheScreen();
+    expect(screen.queryByText('+ Add AI bot')).not.toBeOnTheScreen();
+    await press(screen.getByLabelText('Remove Nova'));
+    await press(screen.getByLabelText('Remove Rex'));
+    await press(screen.getByLabelText('Remove Luna'));
+    await press(screen.getByLabelText('Remove Milo'));
+    expect(screen.getByText('Players at the table · 2/6')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Remove Zara')).not.toBeOnTheScreen();
+    await press(screen.getByText('Start game'));
+    expect(
+      onStart.mock.calls[0][0].map((p: { name: string }) => p.name),
+    ).toEqual(['You', 'Zara']);
+  });
+
+  test('duplicate names → warning and Start is disabled', async () => {
+    const onStart = jest.fn();
+    await render(<RoomScreen onStart={onStart} onBack={jest.fn()} />);
+    await fireEvent.changeText(screen.getByTestId('bot-name-1'), 'nova');
+    expect(
+      screen.getByText(
+        '⚠️ Each player needs a different name – "nova" is used twice.',
+      ),
+    ).toBeOnTheScreen();
+    await press(screen.getByText('Start game'));
+    expect(onStart).not.toHaveBeenCalled();
+    await fireEvent.changeText(screen.getByTestId('bot-name-1'), 'Rex 2');
+    await press(screen.getByText('Start game'));
+    expect(onStart).toHaveBeenCalled();
+  });
+
+  test('Back returns home', async () => {
+    const onBack = jest.fn();
+    await render(<RoomScreen onStart={jest.fn()} onBack={onBack} />);
+    await press(screen.getByText('Back'));
+    expect(onBack).toHaveBeenCalled();
   });
 });

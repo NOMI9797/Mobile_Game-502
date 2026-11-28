@@ -16,8 +16,8 @@ import {
   isValidStartCard,
   shuffle,
 } from './deck';
-import { canPlayCard } from './rules';
-import { GameAction, GameState, Player, PlayerSetup } from './types';
+import { canPlayCard, whyCantPlay } from './rules';
+import { Card, GameAction, GameState, Player, PlayerSetup } from './types';
 
 export const ELIMINATION_SCORE = 502;
 export const CARDS_PER_PLAYER = 7;
@@ -142,25 +142,44 @@ function chooseFirstPlayer(state: GameState): number {
   return best.i;
 }
 
+/**
+ * Turn up the starting card from the top of the deck (the END of the array).
+ * A 2, Jack, Ace or 7♥ is buried at the BOTTOM of the deck (the start of the
+ * array) and the next card is turned up. Returns null if every card is special.
+ */
+export function flipStartCard(
+  deck: Card[],
+): { start: Card; drawPile: Card[] } | null {
+  const pile = [...deck];
+  for (let tries = 0; tries < pile.length; tries++) {
+    const top = pile.pop()!;
+    if (isValidStartCard(top)) return { start: top, drawPile: pile };
+    pile.unshift(top); // bury it at the bottom
+  }
+  return null;
+}
+
 export function startRound(previous: GameState): GameState {
   const state = cloneState(previous);
   state.roundNumber += 1;
 
-  // Fresh shuffled deck, 7 cards to every player still in the game.
-  let deck = shuffle(createDeck());
-  state.players.forEach(p => (p.hand = []));
-  for (let i = 0; i < CARDS_PER_PLAYER; i++) {
-    state.players.forEach(p => {
-      if (!p.eliminated) p.hand.push(deck.pop()!);
-    });
-  }
-
-  // Flip the starting card; a 2, Jack, Ace or 7♥ is put back and we flip again.
-  let start = deck.pop()!;
-  while (!isValidStartCard(start)) {
-    deck = shuffle([...deck, start]);
-    start = deck.pop()!;
-  }
+  // Fresh shuffled deck, 7 cards to every player still in the game, then
+  // flip the starting card. (If only special cards are left in the deck –
+  // extremely rare – there is no valid start card, so deal again.)
+  let deck: Card[];
+  let flipped: { start: Card; drawPile: Card[] } | null;
+  do {
+    deck = shuffle(createDeck());
+    state.players.forEach(p => (p.hand = []));
+    for (let i = 0; i < CARDS_PER_PLAYER; i++) {
+      state.players.forEach(p => {
+        if (!p.eliminated) p.hand.push(deck.pop()!);
+      });
+    }
+    flipped = flipStartCard(deck);
+  } while (!flipped);
+  const start = flipped.start;
+  deck = flipped.drawPile;
 
   state.drawPile = deck;
   state.discardPile = [start];
@@ -244,7 +263,10 @@ function endRound(state: GameState, winner: number): GameState {
 /** Shared checks for PLAY / DRAW / ACCEPT. Returns an error text or null. */
 function turnError(state: GameState, playerIndex: number): string | null {
   if (state.phase !== 'playing') return 'The round is not in progress.';
-  if (playerIndex !== state.currentPlayer) return "It's not your turn.";
+  if (playerIndex !== state.currentPlayer)
+    return `It's not your turn – wait for ${
+      state.players[state.currentPlayer].name
+    }.`;
   return null;
 }
 
@@ -260,7 +282,7 @@ function playCard(
   );
   if (!card) return withError(previous, 'That card is not in your hand.');
   if (!canPlayCard(previous, card)) {
-    return withError(previous, `You can't play ${cardLabel(card)} right now.`);
+    return withError(previous, whyCantPlay(previous, card));
   }
   const isLastCard = previous.players[action.playerIndex].hand.length === 1;
   if (card.rank === 'J' && !isLastCard && !action.chosenSuit) {
@@ -330,7 +352,10 @@ function drawCard(previous: GameState, playerIndex: number): GameState {
   const problem = turnError(previous, playerIndex);
   if (problem) return withError(previous, problem);
   if (previous.pending) {
-    return withError(previous, 'Answer the penalty or accept it first.');
+    return withError(
+      previous,
+      'You must answer the penalty first: play a matching card or tap Accept.',
+    );
   }
 
   const state = cloneState(previous);

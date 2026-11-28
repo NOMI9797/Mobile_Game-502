@@ -1,18 +1,21 @@
 /**
  * HomeScreen.tsx
- * First screen: animated Lottie card fan, game title and the Play button.
+ * First screen: animated Lottie card fan, game title and the "Play 502" card
+ * with Create Room and How to play.
  */
 import LottieView from 'lottie-react-native';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import AppButton from '../components/AppButton';
-import { colors, font, spacing } from '../theme';
+import HowToPlayModal from '../components/HowToPlayModal';
+import { colors, font, radius, spacing } from '../theme';
 
 interface Props {
-  onPlay: () => void;
+  onCreateRoom: () => void;
 }
 
-export default function HomeScreen({ onPlay }: Props) {
+export default function HomeScreen({ onCreateRoom }: Props) {
+  const [showHelp, setShowHelp] = useState(false);
   // Fade + slide the text in when the screen opens.
   const enter = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -49,9 +52,23 @@ export default function HomeScreen({ onPlay }: Props) {
         </Text>
       </Animated.View>
 
-      <Animated.View style={[styles.buttons, { opacity: enter }]}>
-        <AppButton title="PLAY" onPress={onPlay} />
+      <Animated.View style={[styles.card, { opacity: enter }]}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardTitle}>Play 502</Text>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>VS AI BOTS</Text>
+          </View>
+        </View>
+        <AppButton title="Create Room" icon="🃏" onPress={onCreateRoom} />
+        <AppButton
+          title="How to play"
+          icon="📖"
+          variant="secondary"
+          onPress={() => setShowHelp(true)}
+          style={styles.help}
+        />
       </Animated.View>
+      <HowToPlayModal visible={showHelp} onClose={() => setShowHelp(false)} />
     </View>
   );
 }
@@ -64,7 +81,7 @@ const styles = StyleSheet.create({
     padding: spacing.xl,
     backgroundColor: colors.background,
   },
-  lottie: { width: 280, height: 280 },
+  lottie: { width: 220, height: 220 },
   textBlock: { alignItems: 'center' },
   title: {
     color: colors.accent,
@@ -79,5 +96,35 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   small: { color: colors.textMuted, marginTop: spacing.sm },
-  buttons: { width: '100%', maxWidth: 360, marginTop: spacing.xxl },
+  card: {
+    width: '100%',
+    maxWidth: 380,
+    marginTop: spacing.xl,
+    padding: spacing.xl,
+    borderRadius: radius.lg,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: spacing.lg,
+  },
+  cardTitle: { color: colors.text, fontSize: font.title, fontWeight: '900' },
+  badge: {
+    borderWidth: 1,
+    borderColor: colors.accent,
+    borderRadius: radius.pill,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 3,
+  },
+  badgeText: {
+    color: colors.accent,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  help: { marginTop: spacing.md },
 });

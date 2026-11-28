@@ -18,6 +18,8 @@ type Variant = 'primary' | 'secondary' | 'danger' | 'warning';
 
 interface Props {
   title: string;
+  /** Optional emoji shown before the title (kept separate from the text). */
+  icon?: string;
   onPress: () => void;
   variant?: Variant;
   disabled?: boolean;
@@ -28,6 +30,7 @@ interface Props {
 
 export default function AppButton({
   title,
+  icon,
   onPress,
   variant = 'primary',
   disabled = false,
@@ -46,6 +49,8 @@ export default function AppButton({
     <Animated.View style={[{ transform: [{ scale }] }, style]}>
       <Pressable
         accessibilityRole="button"
+        // Read/matched as the title only (not "🃏, Create Room").
+        accessibilityLabel={title}
         accessibilityState={{ disabled }}
         disabled={disabled}
         onPress={onPress}
@@ -53,11 +58,13 @@ export default function AppButton({
         onPressOut={() => springTo(1)}
         style={[
           styles.base,
+          !!icon && styles.row,
           size === 'small' && styles.small,
           styles[variant],
           disabled && styles.disabled,
         ]}
       >
+        {icon ? <Text style={styles.icon}>{icon}</Text> : null}
         <Text
           style={[
             styles.text,
@@ -80,6 +87,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  row: { flexDirection: 'row' },
+  icon: { fontSize: font.body + 2, marginRight: spacing.sm },
   primary: { backgroundColor: colors.accent },
   secondary: {
     backgroundColor: colors.surfaceRaised,

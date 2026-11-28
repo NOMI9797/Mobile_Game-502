@@ -14,7 +14,7 @@ import {
   gameReducer,
 } from '../engine';
 
-const BOT_DELAY_MS = 900;
+const BOT_DELAY_MS = 1300; // slow enough to follow what each bot does
 const FAST_BOT_DELAY_MS = 350; // once you're eliminated and just watching
 
 export function useGame(setups: PlayerSetup[]) {

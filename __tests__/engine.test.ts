@@ -11,9 +11,12 @@ import {
   cardPoints,
   createDeck,
   createGame,
+  flipStartCard,
   gameReducer,
   handPoints,
   isValidStartCard,
+  turnHint,
+  whyCantPlay,
 } from '../src/engine';
 
 // "7H" -> 7♥, "10S" -> 10♠
@@ -99,6 +102,20 @@ describe('deck & scoring', () => {
     ['7S', '8D', 'KC'].forEach(id =>
       expect(isValidStartCard(c(id))).toBe(true),
     );
+  });
+
+  test('a special starting card is buried at the bottom, next card flipped', () => {
+    // Top of the deck is the END of the array: 7♥ then J♦ are special.
+    const deck = [c('3C'), c('9S'), c('5H'), c('JD'), c('7H')];
+    const r = flipStartCard(deck)!;
+    expect(r.start).toEqual(c('5H'));
+    // Both buried at the bottom; J♦ was buried last, so it is the very bottom card.
+    expect(r.drawPile.map(x => x.id)).toEqual(['JD', '7H', '3C', '9S']);
+    expect(deck).toHaveLength(5); // input not changed
+  });
+
+  test('only special cards left → no start card (round is re-dealt)', () => {
+    expect(flipStartCard([c('2C'), c('AS'), c('JH')])).toBeNull();
   });
 });
 
@@ -338,6 +355,44 @@ describe('elimination & winning', () => {
     s.players[1].eliminated = true;
     s = play(s, 0, '5H');
     expect(s.currentPlayer).toBe(2);
+  });
+});
+
+describe('player help texts', () => {
+  test('a wrong card explains what would match', () => {
+    const s = makeState({ hands: ['4D', 'KC'], top: '9H' });
+    expect(whyCantPlay(s, c('4D'))).toBe(
+      "You can't play 4♦: it doesn't match. Play a ♥ Hearts card or a 9. Jacks and 7♥ are wild.",
+    );
+  });
+
+  test('after a Jack only the named suit is mentioned', () => {
+    const s = makeState({ hands: ['4D', 'KC'], top: 'JH', activeSuit: 'S' });
+    expect(whyCantPlay(s, c('4D'))).toMatch(/Play a ♠ Spades card\./);
+  });
+
+  test('during a penalty it says which card can answer', () => {
+    const twos = makeState({
+      hands: ['4D', 'KC'],
+      top: '2H',
+      pending: { kind: 'twos', amount: 4 },
+    });
+    expect(whyCantPlay(twos, c('4D'))).toMatch(/draw-4 penalty.*Only a 2/);
+    expect(turnHint(twos, 0)).toBe(
+      'Play a 2 to pass it on (next player draws 6), or tap "Accept – draw 4".',
+    );
+    const ace = {
+      ...twos,
+      pending: { kind: 'aceSpades', amount: 5 } as Pending,
+    };
+    expect(whyCantPlay(ace, c('4D'))).toMatch(/Only an Ace/);
+    const skip = { ...twos, pending: { kind: 'skip' } as Pending };
+    expect(whyCantPlay(skip, c('4D'))).toMatch(/Only an 8/);
+  });
+
+  test('out of turn names whose turn it is', () => {
+    const s = makeState({ hands: ['5H', 'KH 4H'], top: '9H' });
+    expect(play(s, 1, 'KH').error).toBe("It's not your turn – wait for P0.");
   });
 });
 

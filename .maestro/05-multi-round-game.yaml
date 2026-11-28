@@ -1,0 +1,89 @@
+# Maestro UI test – a real multi-round game on the device, played to the final winner.
+# Rounds 1–3: "You" plays properly (a playable card if there is one, Jacks name
+# Hearts, otherwise accept the penalty or draw).
+# Round 4 onwards: "You" only draws/accepts so the game reaches its end quickly.
+appId: org.reactjs.native.example.Game502
+name: Multi-round game to the final winner
+---
+- launchApp:
+    clearState: true
+- tapOn: "Create Room"
+- tapOn: "Remove Rex"   # 1 bot: the game ends sooner
+- tapOn: "Start game"
+- assertVisible: "Round 1"
+
+- repeat:
+    while:
+      notVisible: "Play again"
+    commands:
+      # Round summary → next round
+      - runFlow:
+          when:
+            visible: "Next round|Watch the bots finish"
+          commands:
+            - takeScreenshot: round-summary
+            - tapOn: "Next round|Watch the bots finish"
+
+      # Jack → name Hearts
+      - runFlow:
+          when:
+            visible: "Jack played – name a suit"
+          commands:
+            - tapOn: "Hearts"
+
+      # Rounds 1–3: play a playable card when possible
+      - runFlow:
+          when:
+            visible: "Round [1-3]"
+          commands:
+            - runFlow:
+                when:
+                  visible:
+                    id: "playable-.*"
+                commands:
+                  - tapOn:
+                      id: "playable-.*"
+
+      # No playable card (or round 4+): accept a penalty, or draw
+      - runFlow:
+          when:
+            visible: "Accept.*"
+            notVisible:
+              id: "playable-.*"
+          commands:
+            - tapOn: "Accept.*"
+      - runFlow:
+          when:
+            visible: "Accept.*"
+            notVisible: "Round [1-3]"
+          commands:
+            - tapOn: "Accept.*"
+      - runFlow:
+          when:
+            visible: "Your turn"
+            notVisible: "Accept.*|Jack played – name a suit"
+          commands:
+            - runFlow:
+                when:
+                  notVisible:
+                    id: "playable-.*"
+                commands:
+                  - tapOn: "Draw a card|No match – draw a card"
+            - runFlow:
+                when:
+                  notVisible: "Round [1-3]"
+                commands:
+                  - tapOn: "Draw a card|No match – draw a card"
+
+# ---- Final winner screen ----
+- assertVisible: "You win!|Game over"
+- assertVisible: "Play again"
+- takeScreenshot: game-over
+
+# ---- Play again: fresh game ----
+- tapOn: "Play again"
+- assertVisible: "Round 1"
+- assertVisible: "You · 0 pts"
+- tapOn: "Quit"
+- tapOn: "Yes, leave"
+- assertVisible: "Create Room"

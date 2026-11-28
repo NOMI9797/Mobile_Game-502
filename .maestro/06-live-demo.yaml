@@ -1,0 +1,121 @@
+# Maestro UI test – full demo from the Home screen to the final winner.
+# Home → How to play → Create Room (rename you + 2 bots) → Start game →
+# a wrong move (warning) → rounds 1–3 played properly → from round 4 "you"
+# only draw/accept so the game reaches its end → winner screen → Play again.
+appId: org.reactjs.native.example.Game502
+name: Live demo – create room to final winner
+---
+- launchApp:
+    clearState: true
+
+# ---- Home + How to play ----
+- extendedWaitUntil: # first launch may still be loading the JS bundle
+    visible: "Create Room"
+    timeout: 120000
+- tapOn: "How to play"
+- assertVisible: "How to play 502"
+- scroll
+- tapOn: "Got it"
+
+# ---- Create Room: you + 2 AI bots, all renamed ----
+- tapOn: "Create Room"
+- assertVisible: "Your room"
+- assertVisible: "Players at the table · 3/6"
+- tapOn:
+    id: "name-input"
+- inputText: "Nouman"
+- tapOn:
+    id: "bot-name-0"
+- inputText: "Ali"
+- tapOn:
+    id: "bot-name-1"
+- inputText: "Sara"
+- tapOn: "Your room" # close the keyboard
+- takeScreenshot: room
+- tapOn: "Start game"
+- assertVisible: "Round 1"
+- assertVisible: "Your turn"
+- takeScreenshot: your-turn
+
+# ---- A wrong move: tap a card that doesn't match ----
+- runFlow:
+    when:
+      visible:
+        id: "card-.*"
+    commands:
+      - tapOn:
+          id: "card-.*"
+      - assertVisible: "✋ Not allowed"
+      - takeScreenshot: warning
+      - tapOn: "Tap to close"
+
+# ---- Play the game ----
+- repeat:
+    while:
+      notVisible: "Play again"
+    commands:
+      - runFlow:
+          when:
+            visible: "Next round|Watch the bots finish"
+          commands:
+            - takeScreenshot: round-summary
+            - tapOn: "Next round|Watch the bots finish"
+      - runFlow:
+          when:
+            visible: "Jack played – name a suit"
+          commands:
+            - tapOn: "Hearts"
+      # Rounds 1–3: play a raised (playable) card when you have one
+      - runFlow:
+          when:
+            visible: "Round [1-3]"
+          commands:
+            - runFlow:
+                when:
+                  visible:
+                    id: "playable-.*"
+                commands:
+                  - tapOn:
+                      id: "playable-.*"
+      # Otherwise accept a penalty or draw
+      - runFlow:
+          when:
+            visible: "Accept.*"
+          commands:
+            - runFlow:
+                when:
+                  notVisible:
+                    id: "playable-.*"
+                commands:
+                  - tapOn: "Accept.*"
+            - runFlow:
+                when:
+                  notVisible: "Round [1-3]"
+                commands:
+                  - tapOn: "Accept.*"
+      - runFlow:
+          when:
+            visible: "Your turn"
+            notVisible: "Accept.*|Jack played – name a suit"
+          commands:
+            - runFlow:
+                when:
+                  notVisible:
+                    id: "playable-.*"
+                commands:
+                  - tapOn: "Draw a card|No match – draw a card"
+            - runFlow:
+                when:
+                  notVisible: "Round [1-3]"
+                commands:
+                  - tapOn: "Draw a card|No match – draw a card"
+
+# ---- Final winner + Play again ----
+- assertVisible: "You win!|Game over"
+- takeScreenshot: game-over
+- tapOn: "Play again"
+- assertVisible: "Round 1"
+- assertVisible: "Nouman · 0 pts"
+- tapOn: "Quit"
+- tapOn: "Yes, leave"
+- assertVisible: "Create Room"
