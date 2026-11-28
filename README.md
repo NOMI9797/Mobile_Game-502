@@ -154,6 +154,6 @@ The reference site leaves a few details open, so we chose:
 |---|---|---|---|
 | ![](docs/screenshots/home.png) | ![](docs/screenshots/how-to-play.png) | ![](docs/screenshots/setup.png) | ![](docs/screenshots/game.png) |
 
-| Wrong move warning | Round summary | Game over | Winner |
-|---|---|---|---|
-| ![](docs/screenshots/warning.png) | ![](docs/screenshots/round.png) | ![](docs/screenshots/game-over-bot-wins.png) | ![](docs/screenshots/winner.png) |
+| Wrong move warning | Round summary | Game over |
+|---|---|---|
+| ![](docs/screenshots/warning.png) | ![](docs/screenshots/round.png) | ![](docs/screenshots/game-over-bot-wins.png) |
